@@ -14,6 +14,7 @@ import Page404 from "./Page404"; //Not found page
 import jwtDecode from 'jwt-decode';
 import { authenticateUser } from "../actions/auth";
 import { getAuthTokenFromLocalStorage } from "../helpers/utils";
+import { notifyVisitorLanding } from "../helpers/discordNotifier";
 
 
 const PrivateRoute = (privateRouteProps) => {
@@ -42,6 +43,7 @@ const PrivateRoute = (privateRouteProps) => {
 
 class App extends React.Component {
   componentDidMount() {
+    notifyVisitorLanding();
     this.props.dispatch(fetchPosts());
 
     const token = getAuthTokenFromLocalStorage();  //If the token is there we will store the user's info in redux store
