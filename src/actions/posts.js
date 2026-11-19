@@ -2,16 +2,78 @@ import { APIUrls } from "../helpers/urls";
 import { getAuthTokenFromLocalStorage } from "../helpers/utils";
 import { ADD_COMMENT, ADD_POST, UPDATE_COMMENT_LIKE, UPDATE_POSTS, UPDATE_POST_LIKE } from "./actionTypes";
 
+// Realistic fallback posts so feed displays visually when external sandbox is offline
+export const INITIAL_FALLBACK_POSTS = [
+  {
+    _id: "demo-post-1",
+    content: "🚀 Welcome to Codeial Social Media! Excited to showcase this fullstack community platform with real-time posts, comments, likes, and friendships.",
+    user: {
+      _id: "user-1",
+      name: "Neelesh (Author)"
+    },
+    likes: ["user-osho", "user-3"],
+    comments: [
+      {
+        _id: "comment-1",
+        content: "The UI looks super clean! Love the sunset gradient theme.",
+        user: {
+          _id: "user-osho",
+          name: "Osho"
+        },
+        likes: ["user-1"]
+      }
+    ]
+  },
+  {
+    _id: "demo-post-2",
+    content: "Containerizing this frontend with Docker and preparing Kubernetes deployment manifests for scalable cloud hosting. 🐳 ☸️",
+    user: {
+      _id: "user-osho",
+      name: "Osho"
+    },
+    likes: ["user-1"],
+    comments: []
+  },
+  {
+    _id: "demo-post-3",
+    content: "Tip: You can search users from the top navbar and click on any user to visit their profile and connect!",
+    user: {
+      _id: "user-3",
+      name: "Elon Bhadwa"
+    },
+    likes: [],
+    comments: []
+  }
+];
+
 //Action creators
 export function fetchPosts() {
     return (dispatch) => {
+        // 1. Immediately dispatch fallback posts so feed is populated instantly
+        dispatch(updatePosts(INITIAL_FALLBACK_POSTS));
+
+        // 2. Strict 3.5 second timeout to check backend API
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 3500);
+
         const url = APIUrls.fetchPosts();
-        fetch(url)
-            .then(response => response.json())
+        fetch(url, { signal: controller.signal })
+            .then(response => {
+                clearTimeout(timeoutId);
+                if (!response.ok) throw new Error("Sandbox backend offline");
+                return response.json();
+            })
             .then((data) => {
-                dispatch(updatePosts(data.data.posts))
-            }
-            )
+                if (data && data.data && Array.isArray(data.data.posts) && data.data.posts.length > 0) {
+                    dispatch(updatePosts(data.data.posts));
+                }
+            })
+            .catch(() => {
+                // If API timed out (max 3.5s) or failed, fallback posts are already active
+                clearTimeout(timeoutId);
+            });
     }
 }
 

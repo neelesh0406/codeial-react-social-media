@@ -9,7 +9,7 @@ import {
 
 import { fetchPosts } from '../actions/posts'
 import './App.css';
-import { Home, Navbar, Login, Signup, Settings, UserProfile } from './';
+import { Home, Navbar, Login, Signup, Settings, UserProfile, MusicPlayer } from './';
 import Page404 from "./Page404"; //Not found page
 import jwtDecode from 'jwt-decode';
 import { authenticateUser } from "../actions/auth";
@@ -79,6 +79,7 @@ class App extends React.Component {
             </Route>
           </Switch>
         </div>
+        <MusicPlayer />
       </Router>);
   }
 }

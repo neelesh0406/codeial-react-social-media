@@ -1,3 +1,11 @@
+# Codeial - Social Networking Platform
+
+A responsive, feature-rich social networking web app built with React and Redux. Features interactive post feeds, rich markdown post formatting, smart geolocation-based ambient audio, live simulation indicators, and friend connections.
+
+> 🚀 **Live Demo:** [codeial-react.vercel.app](https://codeial-react.vercel.app/)
+
+---
+
 # GIF for login
 
 Example dummy registed id: baba@baba.com, example password: baba

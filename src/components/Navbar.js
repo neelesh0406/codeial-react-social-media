@@ -20,10 +20,10 @@ class Navbar extends Component {
     }
 
     handleChangeSearch = (e) => {
+        const searchText = e.target.value;
         this.setState({
-            content: e.target.value
-        })
-        const { content: searchText } = this.state;
+            content: searchText
+        });
         this.props.dispatch(fetchUser(searchText));
     }
 
@@ -51,7 +51,14 @@ class Navbar extends Component {
                         <Link to='/'><img src="https://ninjasfiles.s3.amazonaws.com/0000000000003454.png" alt="logo" /></Link>
                     </div>
                     <div className="search-container">
-                        <input type="text" placeholder="Search.." name="search" onChange={this.handleChangeSearch} value={this.state.content} />
+                        <input
+                            type="text"
+                            placeholder="Search people and posts"
+                            name="search"
+                            autoComplete="off"
+                            onChange={this.handleChangeSearch}
+                            value={this.state.content}
+                        />
                         <button type="button" onClick={this.handleSearchClick}><i className="fa fa-search"></i></button>
 
                         {/* Search results will be displayed only if there are any */}

@@ -1,48 +1,115 @@
 .create-post {
   text-align: center;
   margin: 30px 0;
-  background-color: #fbad9d74;
-  box-shadow: 0 0 5px grey;
-  padding: 8px 0px;
-  border-radius: 5px;
+  background-color: var(--color-card-bg);
+  box-shadow: var(--shadow-subtle);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
 }
+
 #create-post-user-text {
   display: flex;
-  align-items: center;
-  border-bottom: 1px solid rgb(163, 163, 163);
-  padding: 10px;
+  align-items: flex-start;
+  border-bottom: var(--border-divider);
+  padding: 8px 6px 12px 6px;
 }
-#create-post-user-text > div {
+
+.create-post-user-info {
   width: 80px;
-  font-family: sans-serif;
+  flex-shrink: 0;
+  font-family: var(--font-family-base);
   font-size: 12px;
+  text-align: center;
 }
-#create-post-user-text img {
+
+.create-post-user-info img {
   height: 40px;
+}
+
+.create-post-input-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+  text-align: left;
+}
+
+.create-post-format-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.format-btn {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  width: 30px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+}
+
+.format-btn:hover {
+  background-color: var(--color-accent, #fe606d);
+  color: white;
+  border-color: var(--color-accent, #fe606d);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(254, 96, 109, 0.3);
+}
+
+.format-btn:active {
+  transform: translateY(0);
+}
+
+.format-btn strong {
+  font-family: var(--font-family-base);
+  font-weight: 700;
+}
+
+.format-btn em {
+  font-family: var(--font-family-base);
+  font-style: italic;
+}
+
+.format-btn-quote {
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
 #create-post-text {
   width: 100%;
   outline: none;
-  font-family: sans-serif;
+  font-family: var(--font-family-base);
   font-size: 1rem;
+  line-height: 1.5;
   color: black;
   background-color: transparent;
   border: none;
-  resize: none;
+  resize: vertical;
+  min-height: 70px;
 }
 
 #create-post-btn {
   font-size: 1rem;
   color: black;
   border: none;
-  border-radius: 5px;
-  background-color: #f7abb2;
-  padding: 10px;
-  margin-top: 20px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent);
+  padding: 10px 24px;
+  margin-top: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 600;
 }
+
 #create-post-btn:hover {
   background-color: black;
   color: white;

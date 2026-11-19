@@ -1,24 +1,70 @@
+:root {
+  /* Brand Theme Colors */
+  --primary-gradient: linear-gradient(to right, #ff5f6d, #ffc371);
+  --color-primary: #fe606d;
+  --color-primary-start: #ff5f6d;
+  --color-primary-end: #ffc371;
+  --color-accent: #f7abb2;
+  --color-card-bg: #fbad9d74;
+  --color-container-bg: #bfbfbf1f;
+  --color-text-dark: #222222;
+  --color-text-muted: #777777;
+
+  /* Status Dialog Colors */
+  --color-error-bg: #ff003357;
+  --color-success-bg: #8fffaca8;
+
+  /* Borders & Dividers */
+  --border-light: 0.5px solid #cecece;
+  --border-subtle: 0.5px solid #acacac;
+  --border-divider: 1px solid rgb(163, 163, 163);
+  --border-primary: 1px solid var(--color-primary);
+
+  /* Shadows */
+  --shadow-subtle: 0 0 5px grey;
+  --shadow-nav: 0 1px 8px black;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 20px;
+
+  /* Fonts */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+body {
+  font-family: var(--font-family-base);
+  color: var(--color-text-dark);
+}
+
 .App {
+  max-width: 960px;
+  width: 92%;
+  margin: 0 auto 50px auto;
   display: flex;
+  gap: 24px;
+  align-items: flex-start;
   justify-content: center;
-  margin-bottom: 5%;
 }
 
 .alert {
   width: 100%;
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   padding: 8px 10px;
   margin: 10px 0;
 }
 .error-dialog {
-  background-color: #ff003357;
+  background-color: var(--color-error-bg);
 }
 .success-dialog {
-  background-color: #8fffaca8;
+  background-color: var(--color-success-bg);
 }

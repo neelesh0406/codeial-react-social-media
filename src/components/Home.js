@@ -7,7 +7,7 @@ export default class Home extends Component {
         return (
             <>
                 <PostsList posts={posts} isLoggedin={isLoggedin} />
-                {isLoggedin && <FriendsList />}
+                <FriendsList isLoggedin={isLoggedin} />
                 {isLoggedin && <Chat />}
             </>
         )

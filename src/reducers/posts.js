@@ -31,9 +31,9 @@ export default function posts(state = [], action) {
                 return post;
             })
             return postLikes;
-        case UPDATE_COMMENT_LIKE:
+                case UPDATE_COMMENT_LIKE:
             const commentLikes = state.map((post) => {
-                post.comments.map((comment) => {
+                const updatedComments = post.comments.map((comment) => {
                     if (comment._id === action.commentId) {
                         return {
                             ...comment,
@@ -41,8 +41,11 @@ export default function posts(state = [], action) {
                         }
                     }
                     return comment;
-                })
-                return post;
+                });
+                return {
+                    ...post,
+                    comments: updatedComments
+                };
             })
             return commentLikes;
         default:

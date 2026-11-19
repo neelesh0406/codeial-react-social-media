@@ -11,7 +11,8 @@ import Settings from "./Settings";
 import UserProfile from "./UserProfile";
 import FriendsList from "./FriendsList";
 import Chat from "./Chat";
+import MusicPlayer from "./MusicPlayer";
 
-export { PostsList, App, Navbar, Home, Login, Signup, Settings, UserProfile, FriendsList, CreatePost, Post, Comment, Chat };
+export { PostsList, App, Navbar, Home, Login, Signup, Settings, UserProfile, FriendsList, CreatePost, Post, Comment, Chat, MusicPlayer };
 
 //Single file to export all Components anywhere
