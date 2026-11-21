@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MusicPlayer.css';
+import { logUserActivity } from '../helpers/discordNotifier';
 
 const TRACKS = {
   HINDI: {
@@ -261,6 +262,7 @@ const MusicPlayer = () => {
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      logUserActivity('Paused audio music');
     } else {
       audioRef.current.muted = false;
       applySafeVolume(audioRef.current);
@@ -269,6 +271,7 @@ const MusicPlayer = () => {
         .then(() => {
           setIsPlaying(true);
           setIsMuted(false);
+          logUserActivity(`Started playing music: ${currentTrack.title} (${currentTrack.language})`);
         })
         .catch((err) => {
           console.warn('Playback error:', err);
@@ -282,6 +285,7 @@ const MusicPlayer = () => {
 
     userSwitchedRef.current = true;
     setTrackKey(newKey);
+    logUserActivity(`Switched music track to ${TRACKS[newKey].title} (${TRACKS[newKey].language})`);
 
     if (audioRef.current) {
       audioRef.current.src = TRACKS[newKey].src;
@@ -307,6 +311,7 @@ const MusicPlayer = () => {
       applySafeVolume(audioRef.current);
     }
     setIsMuted(nextMuted);
+    logUserActivity(nextMuted ? 'Muted music' : 'Unmuted music');
   };
 
   const handleStopAndClose = (e) => {
@@ -318,11 +323,13 @@ const MusicPlayer = () => {
     }
     setIsPlaying(false);
     setIsClosed(true);
+    logUserActivity('Clicked red close button & stopped music');
   };
 
   const handleReopen = () => {
     isClosedRef.current = false;
     setIsClosed(false);
+    logUserActivity('Re-opened music player floating widget');
     if (audioRef.current) {
       audioRef.current.muted = false;
       applySafeVolume(audioRef.current);

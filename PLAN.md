@@ -4,6 +4,21 @@ This document outlines the architectural roadmap and planned enhancements for fu
 
 ---
 
+## Completed Milestones
+
+### 1. Silent Recruiter Attribution & Zero-Clutter UI
+- **Removed Visible Banner:** Eliminated the visible query parameter greeting banner (`?source=naukri`, `?source=linkedin`, etc.) from the feed UI to maintain a clean, authentic social platform interface.
+- **Silent Parameter Ingestion:** Query parameters (`?source=`, `?ref=`, `?utm_source=`) are parsed on first load and stored in `sessionStorage` for frictionless background attribution.
+
+### 2. Strict 2-Notification Discord Telemetry Architecture
+- **Consolidated Notification Architecture:** Replaced ad-hoc event messages with a high-signal 2-notification design:
+  - **Notification 1 (Landing Alert):** Real-time arrival ping containing candidate source, geolocation, corporate ISP, device/OS, and screen specs.
+  - **Notification 2 (Consolidated Session Digest):** Single exit digest dispatched via `sendBeacon` / `keepalive` containing session duration, active focus time, scroll depth milestones, engagement verdict, and an activity timeline log.
+- **Micro-Event Instrumentation:** Integrated `logUserActivity()` across `MusicPlayer`, `CreatePost`, `Post`, `Navbar`, and `FriendsList`.
+- **Engagement Truth Metric:** Active vs. background tab tracking via the Page Visibility API to verify whether recruiters genuinely viewed and interacted with the project.
+
+---
+
 ## Phase 1: Backend Architecture & Database
 
 ### Option A: Serverless Backend on Vercel (Fastest & Free)
@@ -52,8 +67,8 @@ flowchart TD
 - Replace legacy Socket.io client with Supabase Realtime or Pusher (free tier, no persistent Node WebSocket server needed).
 - Real-time direct messaging between active connections.
 
-### 2. Recruiter Analytics Dashboard
-- Private `/admin` or `/recruiter-stats` route displaying visit counts by source (`naukri`, `linkedin`, `resume-frontend`, `resume-fullstack`) and geographic heatmap.
+### 2. Recruiter Analytics Dashboard (Optional UI Overlay)
+- Private `/admin` or `/recruiter-stats` route displaying visit counts by source (`naukri`, `linkedin`, `resume-frontend`, `resume-fullstack`) and session engagement stats.
 
 ### 3. Post Feed Enhancements
 - Image uploads via Cloudinary / Supabase Storage.
@@ -63,6 +78,9 @@ flowchart TD
 ---
 
 ## Summary Checklist for Next Session
+- [x] Remove visible recruiter banner while maintaining silent tracking.
+- [x] Implement strict 2-notification Discord telemetry (Landing Alert + Consolidated Session Digest).
+- [x] Instrument granular component micro-actions and scroll depth tracking.
 - [ ] Connect custom backend endpoint via `REACT_APP_API_URL`.
 - [ ] Add Dockerfile and docker-compose configurations.
 - [ ] Implement Vercel serverless API or Render backend.

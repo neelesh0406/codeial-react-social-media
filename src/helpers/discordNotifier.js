@@ -1,6 +1,12 @@
 /**
  * Discord Webhook Recruiter & Visitor Notifier for Codeial
- * Sends real-time notifications to Discord when someone visits Codeial.
+ * 
+ * Strict 2-Notification Architecture:
+ * 1. Immediate Landing Alert: Fired once when visitor opens the page (IP, location, source/ref, device).
+ * 2. Consolidated Activity Digest: Fired once upon session exit/backgrounding (time on page,
+ *    actual active viewing duration, scroll depth, and chronological activity timeline).
+ * 
+ * Zero spam: Exactly 2 notifications per visitor session.
  */
 
 const DEFAULT_WEBHOOK_URL =
@@ -11,6 +17,48 @@ const WEBHOOK_URL =
 
 const CODEIAL_LOGO_URL =
   'https://ninjasfiles.s3.amazonaws.com/0000000000003454.png';
+
+// Session State in memory
+const session = {
+  startTime: Date.now(),
+  lastActiveStamp: Date.now(),
+  activeMs: 0,
+  hiddenMs: 0,
+  isTabVisible: true,
+  maxScroll: 0,
+  scrollMilestones: new Set(),
+  events: [],
+  source: 'Direct / Recruiter Portfolio Visit',
+  location: 'Location unavailable',
+  isp: 'Network unavailable',
+  ip: '',
+  device: '',
+  hasSentLanding: false,
+  hasSentSummary: false,
+};
+
+/**
+ * Format milliseconds into human-readable duration (e.g. "2m 14s", "45s")
+ */
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
+
+/**
+ * Format timestamp offset from session start (e.g. "[00:15]")
+ */
+function getEventTimestamp() {
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - session.startTime) / 1000));
+  const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+  const secs = String(elapsedSec % 60).padStart(2, '0');
+  return `[${mins}:${secs}]`;
+}
 
 /**
  * Detect client device, operating system, and browser
@@ -40,144 +88,325 @@ function getDeviceInfo() {
 }
 
 /**
- * Main function to notify recruiter / visitor landing
+ * Extract source parameter from URL or fallback
+ */
+function detectSourceParam() {
+  if (typeof window === 'undefined') return 'Direct';
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const raw =
+      urlParams.get('ref') ||
+      urlParams.get('source') ||
+      urlParams.get('utm_source') ||
+      sessionStorage.getItem('codeial_ref_source');
+
+    if (raw && raw.trim()) {
+      const clean = raw.trim();
+      sessionStorage.setItem('codeial_ref_source', clean);
+      return clean;
+    }
+  } catch (e) {}
+  return 'Direct / Recruiter Portfolio Visit';
+}
+
+/**
+ * Helper to execute Discord Webhook POST safely with keepalive
+ */
+async function postToDiscord(embed) {
+  if (!WEBHOOK_URL) return;
+  try {
+    const payload = JSON.stringify({ embeds: [embed] });
+    if (typeof fetch !== 'undefined') {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      });
+    }
+  } catch (err) {
+    console.warn('Discord webhook dispatch error:', err);
+  }
+}
+
+/**
+ * Log a user action or interaction into the session timeline
+ */
+export function logUserActivity(action) {
+  if (!action || typeof action !== 'string') return;
+
+  const timestamp = getEventTimestamp();
+  const entry = `${timestamp} ${action.trim()}`;
+
+  // Prevent immediate duplicate log spam
+  const lastEvent = session.events[session.events.length - 1];
+  if (lastEvent && lastEvent.endsWith(action.trim())) {
+    return;
+  }
+
+  session.events.push(entry);
+
+  // Keep events list bounded
+  if (session.events.length > 50) {
+    session.events.shift();
+  }
+}
+
+/**
+ * 1. Immediate Landing Notification (Notification 1 of 2)
  */
 export async function notifyVisitorLanding() {
   if (typeof window === 'undefined') return;
 
-  // Prevent multiple alerts within the same browser session
-  const SESSION_KEY = 'codeial_discord_notified';
-  if (sessionStorage.getItem(SESSION_KEY)) {
+  // Ensure landing is logged only once per session
+  const LANDING_KEY = 'codeial_discord_landing_notified';
+  if (sessionStorage.getItem(LANDING_KEY)) {
+    session.hasSentLanding = true;
     return;
   }
+  sessionStorage.setItem(LANDING_KEY, 'true');
+  session.hasSentLanding = true;
 
-  // Mark as notified immediately to prevent race conditions during React lifecycle
-  sessionStorage.setItem(SESSION_KEY, 'true');
+  session.source = detectSourceParam();
+  session.device = getDeviceInfo();
+  logUserActivity(`Landed on feed (${window.location.pathname})`);
 
+  // Fetch IP and Geolocation asynchronously
   try {
-    // 1. Detect source from URL query parameter (?source=naukri, ?source=linkedin, etc.)
-    const urlParams = new URLSearchParams(window.location.search);
-    const rawSource =
-      urlParams.get('source') ||
-      urlParams.get('ref') ||
-      urlParams.get('utm_source');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-    const source = rawSource
-      ? rawSource.trim()
-      : 'Direct / Recruiter Portfolio Visit';
+    const res = await fetch('https://ipwho.is/', { signal: controller.signal });
+    clearTimeout(timeoutId);
 
-    // 2. Fetch IP and Geolocation data from ipwho.is
-    let locationStr = 'Location unavailable';
-    let ispStr = 'Network unavailable';
-    let ipStr = '';
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      const res = await fetch('https://ipwho.is/', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.success !== false) {
-          const city = data.city || '';
-          const region = data.region || '';
-          const countryCode = data.country_code || data.country || '';
-
-          const parts = [city, region].filter(Boolean).join(', ');
-          locationStr = parts
-            ? `${parts} (${countryCode})`
-            : countryCode || 'Unknown';
-
-          ispStr =
-            data.connection?.isp ||
-            data.connection?.org ||
-            data.isp ||
-            'Unknown ISP';
-
-          if (data.ip) {
-            ipStr = data.ip;
-          }
-        }
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success !== false) {
+        const city = data.city || '';
+        const region = data.region || '';
+        const countryCode = data.country_code || data.country || '';
+        const parts = [city, region].filter(Boolean).join(', ');
+        session.location = parts ? `${parts} (${countryCode})` : countryCode || 'Unknown';
+        session.isp = data.connection?.isp || data.connection?.org || data.isp || 'Unknown ISP';
+        session.ip = data.ip || '';
+        
+        sessionStorage.setItem('codeial_geo_location', session.location);
+        sessionStorage.setItem('codeial_geo_isp', session.isp);
+        sessionStorage.setItem('codeial_geo_ip', session.ip);
       }
-    } catch (geoErr) {
-      console.warn('Geolocation lookup skipped/failed:', geoErr);
     }
-
-    const deviceInfo = getDeviceInfo();
-    const timeFormatted = new Date().toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      dateStyle: 'medium',
-      timeStyle: 'medium',
-    });
-
-    // 3. Format Discord Rich Embed
-    const embed = {
-      title: '🚨 Recruiter / Visitor Landed on Codeial!',
-      description: `A visitor just opened Codeial from **${source}**.`,
-      color: 0xff5f6d, // Codeial sunset coral
-      fields: [
-        {
-          name: '🎯 Source',
-          value: `\`${source}\``,
-          inline: true,
-        },
-        {
-          name: '📍 Location',
-          value: locationStr,
-          inline: true,
-        },
-        {
-          name: '🏢 ISP / Org',
-          value: ispStr,
-          inline: false,
-        },
-        {
-          name: '📱 Device / Platform',
-          value: deviceInfo,
-          inline: true,
-        },
-        {
-          name: '⏰ Time (IST)',
-          value: `${timeFormatted} IST`,
-          inline: true,
-        },
-      ],
-      thumbnail: {
-        url: CODEIAL_LOGO_URL,
-      },
-      footer: {
-        text: 'Codeial Recruiter Analytics',
-        icon_url: CODEIAL_LOGO_URL,
-      },
-      timestamp: new Date().toISOString(),
-    };
-
-    if (ipStr) {
-      embed.fields.push({
-        name: '🌐 IP Address',
-        value: `\`${ipStr}\``,
-        inline: true,
-      });
-    }
-
-    // 4. Send to Discord Webhook
-    if (WEBHOOK_URL) {
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          embeds: [embed],
-        }),
-      });
-    }
-  } catch (err) {
-    // Fail silently so it never impacts user experience
-    console.error('Failed to send Discord visitor notification:', err);
+  } catch (e) {
+    console.warn('Geolocation lookup skipped:', e);
   }
+
+  const timeFormatted = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+  });
+
+  const embed = {
+    title: '🚨 Recruiter / Visitor Landed on Codeial!',
+    description: `A visitor just opened Codeial with **ref / source:** \`${session.source}\`.`,
+    color: 0xff5f6d, // Sunset coral
+    fields: [
+      { name: '🎯 Source / Ref', value: `\`${session.source}\``, inline: true },
+      { name: '📍 Location', value: session.location, inline: true },
+      { name: '🏢 ISP / Org', value: session.isp, inline: false },
+      { name: '📱 Device / Platform', value: session.device, inline: true },
+      { name: '⏰ Landed At (IST)', value: `${timeFormatted} IST`, inline: true },
+    ],
+    thumbnail: { url: CODEIAL_LOGO_URL },
+    footer: { text: 'Codeial Recruiter Analytics • Landing Notification (1 of 2)', icon_url: CODEIAL_LOGO_URL },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (session.ip) {
+    embed.fields.push({ name: '🌐 IP Address', value: `\`${session.ip}\``, inline: true });
+  }
+
+  await postToDiscord(embed);
+}
+
+/**
+ * 2. Consolidated Session Activity Summary (Notification 2 of 2)
+ */
+export async function sendSessionSummary(reason = 'Session ended') {
+  if (typeof window === 'undefined') return;
+
+  const SUMMARY_KEY = 'codeial_discord_summary_sent';
+  if (session.hasSentSummary || sessionStorage.getItem(SUMMARY_KEY)) {
+    return;
+  }
+  session.hasSentSummary = true;
+  sessionStorage.setItem(SUMMARY_KEY, 'true');
+
+  // Update active viewing times
+  const now = Date.now();
+  if (session.isTabVisible) {
+    session.activeMs += now - session.lastActiveStamp;
+  } else {
+    session.hiddenMs += now - session.lastActiveStamp;
+  }
+  const totalMs = now - session.startTime;
+
+  // Restore cached geolocation if session memory missed it
+  if (session.location === 'Location unavailable') {
+    session.location = sessionStorage.getItem('codeial_geo_location') || 'Location unavailable';
+    session.isp = sessionStorage.getItem('codeial_geo_isp') || 'Network unavailable';
+    session.ip = sessionStorage.getItem('codeial_geo_ip') || '';
+  }
+  if (!session.source || session.source === 'Direct / Recruiter Portfolio Visit') {
+    session.source = detectSourceParam();
+  }
+  if (!session.device) {
+    session.device = getDeviceInfo();
+  }
+
+  logUserActivity(reason);
+
+  // Engagement assessment
+  let engagementStatus = '⚡ Bounced (<10s)';
+  if (session.activeMs >= 45000) {
+    engagementStatus = '🌟 High Engagement (Active >45s)';
+  } else if (session.activeMs >= 15000) {
+    engagementStatus = '✅ Engaged View (Active 15-45s)';
+  } else if (session.activeMs >= 5000) {
+    engagementStatus = '👀 Brief Inspection (5-15s)';
+  }
+
+  // Format activity event logs (Discord field limit: 1024 chars)
+  let formattedEvents = session.events.slice(-15).join('\n');
+  if (!formattedEvents) {
+    formattedEvents = 'No interactions recorded (Passive viewing)';
+  }
+  if (formattedEvents.length > 900) {
+    formattedEvents = formattedEvents.substring(0, 900) + '\n... (truncated)';
+  }
+
+  const embed = {
+    title: '📊 Recruiter Activity & Engagement Digest',
+    description: `Consolidated session report for visitor from **${session.source}** (${session.location}).`,
+    color: 0x10b981, // Emerald Green
+    fields: [
+      {
+        name: '⏱️ Time on Page',
+        value: `**Total:** ${formatDuration(totalMs)}\n**Active Focus:** ${formatDuration(session.activeMs)}\n**Backgrounded:** ${formatDuration(session.hiddenMs)}`,
+        inline: true,
+      },
+      {
+        name: '📜 Scroll Depth',
+        value: `**Max Scrolled:** ${session.maxScroll}%\n${session.maxScroll >= 60 ? '✅ Read through posts' : '⚡ Quick glance'}`,
+        inline: true,
+      },
+      {
+        name: '👁️ Actually Viewed?',
+        value: engagementStatus,
+        inline: true,
+      },
+      {
+        name: `🖱️ User Activity Timeline (${session.events.length} total events)`,
+        value: `\`\`\`text\n${formattedEvents}\n\`\`\``,
+        inline: false,
+      },
+      {
+        name: '📱 Device & Network',
+        value: `${session.device}\n${session.location} • ${session.isp}`,
+        inline: false,
+      },
+    ],
+    thumbnail: { url: CODEIAL_LOGO_URL },
+    footer: {
+      text: 'Codeial Recruiter Analytics • Consolidated Digest (2 of 2)',
+      icon_url: CODEIAL_LOGO_URL,
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  await postToDiscord(embed);
+}
+
+/**
+ * Initialize automatic listeners for scrolling, tab visibility, and exit events
+ */
+let isInitialized = false;
+
+export function initActivityTracker() {
+  if (typeof window === 'undefined' || isInitialized) return;
+  isInitialized = true;
+
+  session.source = detectSourceParam();
+  session.device = getDeviceInfo();
+
+  // 1. Scroll depth tracking with milestones
+  let scrollTimeout = null;
+  const handleScroll = () => {
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+
+      const currentScroll = Math.min(100, Math.round((window.scrollY / scrollHeight) * 100));
+      if (currentScroll > session.maxScroll) {
+        session.maxScroll = currentScroll;
+      }
+
+      // Check milestones
+      [25, 50, 75, 100].forEach((milestone) => {
+        if (currentScroll >= milestone && !session.scrollMilestones.has(milestone)) {
+          session.scrollMilestones.add(milestone);
+          logUserActivity(
+            milestone === 100
+              ? 'Scrolled to bottom of feed (100%)'
+              : `Scrolled ${milestone}% down feed`
+          );
+        }
+      });
+    }, 200);
+  };
+  window.addEventListener('scroll', handleScroll, { passive: true });
+
+  // 2. Tab Visibility Tracking (Active focus vs Background tab)
+  let hiddenTimer = null;
+  const handleVisibilityChange = () => {
+    const now = Date.now();
+    if (document.visibilityState === 'hidden') {
+      session.isTabVisible = false;
+      session.activeMs += now - session.lastActiveStamp;
+      session.lastActiveStamp = now;
+      logUserActivity('Tab switched to background');
+
+      // If tab remains hidden for 25 seconds, flush the session summary
+      hiddenTimer = setTimeout(() => {
+        if (!session.hasSentSummary) {
+          sendSessionSummary('Visitor left tab in background');
+        }
+      }, 25000);
+    } else {
+      if (hiddenTimer) {
+        clearTimeout(hiddenTimer);
+        hiddenTimer = null;
+      }
+      session.isTabVisible = true;
+      session.hiddenMs += now - session.lastActiveStamp;
+      session.lastActiveStamp = now;
+      logUserActivity('Tab returned to active focus');
+    }
+  };
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  // 3. Tab exit / unload triggers (Reliable dispatch via keepalive)
+  const handleExit = () => {
+    sendSessionSummary('Visitor closed or left page');
+  };
+  window.addEventListener('pagehide', handleExit);
+  window.addEventListener('beforeunload', handleExit);
+
+  // 4. Fallback: If visitor stays for 5 minutes of continuous browsing, send digest checkpoint
+  setTimeout(() => {
+    if (!session.hasSentSummary) {
+      sendSessionSummary('5-minute continuous session milestone reached');
+    }
+  }, 300000);
 }

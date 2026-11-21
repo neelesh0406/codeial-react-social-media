@@ -15,7 +15,6 @@ class PostsList extends Component {
       isCheckingAPI: true,
       isTyping: true,
       typingUser: 'Osho',
-      sourceInfo: null,
     };
     this.apiTimer = null;
     this.typingInterval = null;
@@ -36,47 +35,7 @@ class PostsList extends Component {
       if (rawSource) {
         sessionStorage.setItem('codeial_ref_source', rawSource);
       }
-
-      if (sessionStorage.getItem('codeial_source_dismissed') === 'true') {
-        return;
-      }
-
-      if (!rawSource) return;
-
-      let title = 'Recruiter';
-      let message = "Welcome to Neelesh's Codeial portfolio showcase!";
-
-      if (rawSource.includes('naukri')) {
-        title = 'Naukri Hiring Team';
-        message = "Welcome! Viewing Neelesh's live Codeial showcase from Naukri.";
-      } else if (rawSource.includes('linkedin')) {
-        title = 'LinkedIn Recruiter';
-        message = "Welcome! Viewing Neelesh's live Codeial showcase from LinkedIn.";
-      } else if (rawSource === 'resume1' || rawSource.includes('frontend')) {
-        title = 'Frontend Hiring Team';
-        message = "Welcome! Viewing Neelesh's live Codeial portfolio demo.";
-      } else if (rawSource === 'resume2' || rawSource.includes('fullstack')) {
-        title = 'Fullstack Hiring Team';
-        message = "Welcome! Viewing Neelesh's live Codeial portfolio demo.";
-      } else if (rawSource.includes('resume')) {
-        title = 'Resume Visitor';
-        message = "Welcome! Viewing Neelesh's live Codeial portfolio demo.";
-      } else {
-        title = `${rawSource.charAt(0).toUpperCase() + rawSource.slice(1)} Visitor`;
-        message = "Welcome to Neelesh's live Codeial portfolio showcase!";
-      }
-
-      this.setState({
-        sourceInfo: { title, message },
-      });
     } catch (e) {}
-  };
-
-  dismissSourceBanner = () => {
-    try {
-      sessionStorage.setItem('codeial_source_dismissed', 'true');
-    } catch (e) {}
-    this.setState({ sourceInfo: null });
   };
 
   componentDidMount() {
@@ -159,29 +118,11 @@ class PostsList extends Component {
 
   render() {
     const { posts, isLoggedin } = this.props;
-    const { isCheckingAPI, isTyping, typingUser, sourceInfo } = this.state;
+    const { isCheckingAPI, isTyping, typingUser } = this.state;
 
     return (
       <div className="posts-list">
         <h1>Posts</h1>
-
-        {/* Recruiter / Reference Source Welcome Banner */}
-        {sourceInfo && (
-          <div className="recruiter-source-banner" role="status">
-            <div className="recruiter-source-content">
-              <span className="recruiter-source-badge">👋 {sourceInfo.title}</span>
-              <span className="recruiter-source-text">{sourceInfo.message}</span>
-            </div>
-            <button
-              className="recruiter-source-dismiss"
-              onClick={this.dismissSourceBanner}
-              title="Dismiss banner"
-              aria-label="Dismiss banner"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Loading state badge - active only during check */}
         {isCheckingAPI && (

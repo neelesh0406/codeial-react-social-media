@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchFriends } from '../actions/friends';
+import { logUserActivity } from '../helpers/discordNotifier';
 import './FriendsList.css';
 
 // Exact people featured in the mock posts & live feed
@@ -46,7 +47,10 @@ class FriendsList extends Component {
         <h1>Connections</h1>
         {!isLoggedin && (
           <div className="friends-login-prompt">
-            <Link to="/login">Login</Link> to add friends
+            <Link to="/login" onClick={() => logUserActivity('Clicked "Login to add friends" in sidebar')}>
+              Login
+            </Link>{' '}
+            to add friends
           </div>
         )}
 
@@ -57,6 +61,7 @@ class FriendsList extends Component {
                 to={`/user/${friend.to_user._id}`}
                 className="friend-wrapper"
                 key={friend.to_user._id}
+                onClick={() => logUserActivity(`Clicked friend profile: ${friend.to_user.name}`)}
               >
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/1674/1674291.png"

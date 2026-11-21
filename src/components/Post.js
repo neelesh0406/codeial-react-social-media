@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { addLike, createComment } from '../actions/posts';
 import { APIUrls } from '../helpers/urls';
 import { getAuthTokenFromLocalStorage, getFormBody } from '../helpers/utils';
+import { logUserActivity } from '../helpers/discordNotifier';
 import { Comment } from './';
 import './Post.css';
 
@@ -135,10 +136,14 @@ class Post extends Component {
         this.setState({
             commentContent: e.target.value
         });
+        if (e.target.value.length === 1) {
+            logUserActivity(`Started typing comment on post by ${this.props.post.user.name}`);
+        }
     }
 
     handleCreateComment = async () => {
         const { commentContent } = this.state;
+        logUserActivity(`Submitted comment on post by ${this.props.post.user.name}`);
         const url = APIUrls.createComment;
         const options = {
             method: 'post',
@@ -164,6 +169,7 @@ class Post extends Component {
 
     handlePostLikeClick = () => {
         const { post, user } = this.props;
+        logUserActivity(`Clicked like on post by ${post.user.name}`);
         this.props.dispatch(addLike(post._id, 'Post', user._id));
     }
 

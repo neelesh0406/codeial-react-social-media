@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { logoutUser } from '../actions/auth';
 import { fetchUser, userSearchStart } from '../actions/search';
+import { logUserActivity } from '../helpers/discordNotifier';
 
 import './Navbar.css';
 
@@ -29,10 +30,16 @@ class Navbar extends Component {
 
     handleSearchClick = () => {
         const { content: searchText } = this.state;
+        if (searchText && searchText.trim()) {
+            logUserActivity(`Searched for: "${searchText.trim()}"`);
+        }
         this.props.dispatch(fetchUser(searchText));
     }
 
-    handleListClick = () => {
+    handleListClick = (userName) => {
+        if (userName) {
+            logUserActivity(`Clicked search result user profile: ${userName}`);
+        }
         //empties the search box
         this.setState({
             content: '',
@@ -66,7 +73,7 @@ class Navbar extends Component {
                             <ul>
                                 {search.map((user) => {
                                     return <li key={user._id}>
-                                        <Link to={`/user/${user._id}`} onClick={this.handleListClick}>
+                                        <Link to={`/user/${user._id}`} onClick={() => this.handleListClick(user.name)}>
                                             <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar" />
                                             <span>{user.name}</span>
                                         </Link>

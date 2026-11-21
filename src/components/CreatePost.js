@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { APIUrls } from '../helpers/urls';
 import { getAuthTokenFromLocalStorage, getFormBody } from '../helpers/utils';
 import { addPost } from '../actions/posts';
+import { logUserActivity } from '../helpers/discordNotifier';
 import './CreatePost.css';
 
 class CreatePost extends Component {
@@ -20,6 +21,7 @@ class CreatePost extends Component {
     }
 
     applyFormatting = (syntax) => {
+        logUserActivity(`Used post toolbar: ${syntax}`);
         const textarea = this.textareaRef.current;
         if (!textarea) return;
 
@@ -75,6 +77,7 @@ class CreatePost extends Component {
 
     handleAddPost = async () => {
         const { text } = this.state;
+        logUserActivity('Submitted new post');
         const url = APIUrls.createPost;
         const options = {
             method: 'post',
