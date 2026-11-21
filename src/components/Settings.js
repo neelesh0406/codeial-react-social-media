@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux';
 import { clearAuthState, editUser } from '../actions/auth';
+import { logUserActivity } from '../helpers/discordNotifier';
 import './Settings.css';
 
 class Settings extends Component {
@@ -26,6 +27,7 @@ class Settings extends Component {
         const { user } = this.props.auth;
 
         if (name && password && confirmPassword && password === confirmPassword) {
+            logUserActivity('Saved updated profile in settings');
             this.props.dispatch(editUser(name, password, confirmPassword, user._id))
             this.handleChange('editMode', false);
             return;
@@ -73,9 +75,15 @@ class Settings extends Component {
                     <div>
                         {editMode ?
                             <><button className="settings-btn" onClick={this.handleSave}>Save</button>
-                                <p id="go-back" onClick={() => this.handleChange('editMode', false)}>Go back</p></>
+                                <p id="go-back" onClick={() => {
+                                    logUserActivity('Cancelled editing profile in settings');
+                                    this.handleChange('editMode', false);
+                                }}>Go back</p></>
                             :
-                            <button onClick={() => this.handleChange('editMode', true)} className="settings-btn">Edit Profile</button>
+                            <button onClick={() => {
+                                logUserActivity('Clicked Edit Profile in settings');
+                                this.handleChange('editMode', true);
+                            }} className="settings-btn">Edit Profile</button>
                         }
                     </div>
                 </div>

@@ -83,6 +83,8 @@ Micro-action tracking is integrated across core platform components via `logUser
 - **`Post.js`:** Post likes, comment toggles, comment submissions, and author profile clicks (`Osho`, `Elon Bhadwa`, `Neelesh`).
 - **`Navbar.js`:** Search bar queries and search result profile link clicks.
 - **`FriendsList.js`:** Sidebar connection profile clicks and "Login to add friends" prompt clicks.
+- **`Chat.js`:** Group chat widget open/close toggle and message transmissions.
+- **`Settings.js`:** User profile edits and credential update submissions.
 
 ### F. Feed Polish & Simulated Activity
 - **Safe Markdown Rendering:** Custom parser in `Post.js` supports `**bold**`, `*italic*`, and `> blockquotes` with 0 XSS risk.

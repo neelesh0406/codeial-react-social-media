@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux';
 import io from 'socket.io-client';
+import { logUserActivity } from '../helpers/discordNotifier';
 import './Chat.css'
 
 class Chat extends Component {
@@ -54,6 +55,7 @@ class Chat extends Component {
     };
 
     handleChatClick = () => {
+        logUserActivity(this.state.isOpen ? 'Closed group chat widget' : 'Opened group chat widget');
         this.setState(prevState => ({
             isOpen: !prevState.isOpen
         }))
@@ -63,6 +65,7 @@ class Chat extends Component {
         const { typedMessage } = this.state;
 
         if (typedMessage && this.userEmail) {
+            logUserActivity('Sent group chat message');
             this.socket.emit('send_message', {
                 message: typedMessage,
                 user_email: this.userEmail,
