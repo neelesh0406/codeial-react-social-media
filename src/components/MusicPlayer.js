@@ -43,6 +43,8 @@ const MusicPlayer = () => {
   const userSwitchedRef = useRef(false);
   const trackKeyRef = useRef('HINDI');
 
+  const currentTrack = TRACKS[trackKey] || TRACKS.HINDI;
+
   // Keep trackKeyRef updated
   useEffect(() => {
     trackKeyRef.current = trackKey;
@@ -342,8 +344,6 @@ const MusicPlayer = () => {
         .catch(() => {});
     }
   };
-
-  const currentTrack = TRACKS[trackKey];
 
   return (
     <div className={`music-player-container ${isClosed ? 'closed' : ''}`}>

@@ -7,6 +7,7 @@ import Loader from './Loader';
 import { APIUrls } from '../helpers/urls';
 import { addFriend, removeFriend } from '../actions/friends';
 import { getAuthTokenFromLocalStorage } from '../helpers/utils';
+import { logUserActivity } from '../helpers/discordNotifier';
 
 class UserProfile extends Component {
     constructor(props) {
@@ -39,6 +40,8 @@ class UserProfile extends Component {
     }
 
     handleAddFriendClick = async () => {
+        const targetName = (this.props.profile && this.props.profile.user && this.props.profile.user.name) || 'user';
+        logUserActivity(`Clicked Add Friend for ${targetName}`);
         const userId = this.props.match.params.userId;
         const url = APIUrls.addFriendship(userId);
 
@@ -67,6 +70,8 @@ class UserProfile extends Component {
     }
 
     handleRemoveFriendClick = async () => {
+        const targetName = (this.props.profile && this.props.profile.user && this.props.profile.user.name) || 'user';
+        logUserActivity(`Clicked Remove Friend for ${targetName}`);
         const userId = this.props.match.params.userId;
         const url = APIUrls.removeFriendship(userId);
 

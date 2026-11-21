@@ -24,7 +24,7 @@ const session = {
   lastActiveStamp: Date.now(),
   activeMs: 0,
   hiddenMs: 0,
-  isTabVisible: true,
+  isTabVisible: typeof document !== 'undefined' ? document.visibilityState !== 'hidden' : true,
   maxScroll: 0,
   scrollMilestones: new Set(),
   events: [],
@@ -101,7 +101,8 @@ function detectSourceParam() {
       sessionStorage.getItem('codeial_ref_source');
 
     if (raw && raw.trim()) {
-      const clean = raw.trim();
+      let clean = raw.trim();
+      if (clean.length > 100) clean = clean.slice(0, 97) + '...';
       sessionStorage.setItem('codeial_ref_source', clean);
       return clean;
     }
@@ -110,12 +111,67 @@ function detectSourceParam() {
 }
 
 /**
+ * Strict sanitizer to enforce Discord embed constraints:
+ * - field name: 1-256 chars (never empty)
+ * - field value: 1-1024 chars (never empty)
+ * - title: max 256 chars
+ * - description: max 2048 chars
+ * - footer text: max 2048 chars
+ */
+function sanitizeEmbed(embed) {
+  if (!embed || typeof embed !== 'object') return embed;
+
+  const sanitized = { ...embed };
+
+  if (sanitized.title && sanitized.title.length > 256) {
+    sanitized.title = sanitized.title.slice(0, 253) + '...';
+  }
+
+  if (sanitized.description && sanitized.description.length > 2048) {
+    sanitized.description = sanitized.description.slice(0, 2045) + '...';
+  }
+
+  if (sanitized.footer && sanitized.footer.text && sanitized.footer.text.length > 2048) {
+    sanitized.footer = {
+      ...sanitized.footer,
+      text: sanitized.footer.text.slice(0, 2045) + '...',
+    };
+  }
+
+  if (Array.isArray(sanitized.fields)) {
+    sanitized.fields = sanitized.fields.map((field) => {
+      let name = (field.name !== undefined && field.name !== null ? String(field.name) : 'Detail').trim();
+      let value = (field.value !== undefined && field.value !== null ? String(field.value) : 'N/A').trim();
+
+      if (!name) name = 'Detail';
+      if (!value) value = 'N/A';
+
+      if (name.length > 256) {
+        name = name.slice(0, 253) + '...';
+      }
+      if (value.length > 1024) {
+        value = value.slice(0, 1021) + '...';
+      }
+
+      return {
+        ...field,
+        name,
+        value,
+      };
+    });
+  }
+
+  return sanitized;
+}
+
+/**
  * Helper to execute Discord Webhook POST safely with keepalive
  */
 async function postToDiscord(embed) {
   if (!WEBHOOK_URL) return;
   try {
-    const payload = JSON.stringify({ embeds: [embed] });
+    const safeEmbed = sanitizeEmbed(embed);
+    const payload = JSON.stringify({ embeds: [safeEmbed] });
     if (typeof fetch !== 'undefined') {
       await fetch(WEBHOOK_URL, {
         method: 'POST',
@@ -135,12 +191,19 @@ async function postToDiscord(embed) {
 export function logUserActivity(action) {
   if (!action || typeof action !== 'string') return;
 
+  let cleanAction = action.trim();
+  if (!cleanAction) return;
+
+  if (cleanAction.length > 120) {
+    cleanAction = cleanAction.slice(0, 117) + '...';
+  }
+
   const timestamp = getEventTimestamp();
-  const entry = `${timestamp} ${action.trim()}`;
+  const entry = `${timestamp} ${cleanAction}`;
 
   // Prevent immediate duplicate log spam
   const lastEvent = session.events[session.events.length - 1];
-  if (lastEvent && lastEvent.endsWith(action.trim())) {
+  if (lastEvent && (lastEvent.endsWith(` ${cleanAction}`) || lastEvent === cleanAction)) {
     return;
   }
 
@@ -248,6 +311,7 @@ export async function sendSessionSummary(reason = 'Session ended') {
   } else {
     session.hiddenMs += now - session.lastActiveStamp;
   }
+  session.lastActiveStamp = now;
   const totalMs = now - session.startTime;
 
   // Restore cached geolocation if session memory missed it
@@ -335,6 +399,10 @@ export function initActivityTracker() {
   if (typeof window === 'undefined' || isInitialized) return;
   isInitialized = true;
 
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+    session.isTabVisible = false;
+  }
+
   session.source = detectSourceParam();
   session.device = getDeviceInfo();
 
@@ -344,10 +412,20 @@ export function initActivityTracker() {
     if (scrollTimeout) return;
     scrollTimeout = setTimeout(() => {
       scrollTimeout = null;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body ? document.body.scrollHeight : 0
+      ) - window.innerHeight;
       if (scrollHeight <= 0) return;
 
-      const currentScroll = Math.min(100, Math.round((window.scrollY / scrollHeight) * 100));
+      const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      let currentScroll = Math.min(100, Math.max(0, Math.round((scrollTop / scrollHeight) * 100)));
+
+      // If within 5px of bottom, mark as 100%
+      if (scrollTop + window.innerHeight >= (document.documentElement.scrollHeight - 5)) {
+        currentScroll = 100;
+      }
+
       if (currentScroll > session.maxScroll) {
         session.maxScroll = currentScroll;
       }

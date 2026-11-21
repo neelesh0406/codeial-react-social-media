@@ -137,13 +137,16 @@ class Post extends Component {
             commentContent: e.target.value
         });
         if (e.target.value.length === 1) {
-            logUserActivity(`Started typing comment on post by ${this.props.post.user.name}`);
+            const authorName = (this.props.post && this.props.post.user && this.props.post.user.name) || 'User';
+            logUserActivity(`Started typing comment on post by ${authorName}`);
         }
     }
 
     handleCreateComment = async () => {
         const { commentContent } = this.state;
-        logUserActivity(`Submitted comment on post by ${this.props.post.user.name}`);
+        if (!commentContent || !commentContent.trim()) return;
+        const authorName = (this.props.post && this.props.post.user && this.props.post.user.name) || 'User';
+        logUserActivity(`Submitted comment on post by ${authorName}`);
         const url = APIUrls.createComment;
         const options = {
             method: 'post',
@@ -169,26 +172,31 @@ class Post extends Component {
 
     handlePostLikeClick = () => {
         const { post, user } = this.props;
-        logUserActivity(`Clicked like on post by ${post.user.name}`);
-        this.props.dispatch(addLike(post._id, 'Post', user._id));
+        const authorName = (post && post.user && post.user.name) || 'User';
+        logUserActivity(`Clicked like on post by ${authorName}`);
+        const userId = user ? user._id : undefined;
+        this.props.dispatch(addLike(post._id, 'Post', userId));
     }
 
     render() {
         const { post, user } = this.props;
-
-        const isPostLikedByUser = post.likes.includes(user._id); //true or false. Only valid when the user likes. After refresh this doesn't work
+        const authorName = (post && post.user && post.user.name) || 'User';
+        const authorId = (post && post.user && (post.user._id || post.user)) || '';
+        const isPostLikedByUser = user && user._id && Array.isArray(post.likes) ? post.likes.includes(user._id) : false;
+        const likesCount = Array.isArray(post.likes) ? post.likes.length : 0;
+        const comments = Array.isArray(post.comments) ? post.comments : [];
 
         return (
             <div className="post-wrapper">
                 {/* Post wrapper divided into sections */}
                 {/* header contains user avatar, name, the time when post was created */}
                 <div className="post-header">
-                    <Link to={`/user/${post.user._id}`} >
+                    <Link to={`/user/${authorId}`} onClick={() => logUserActivity(`Clicked post author profile: ${authorName}`)}>
                         <img className="post-header-avatar" src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="avatar" />
                         {/* when clicked redirect to API_ROOT/users/{post.user._id} */}
                     </Link>
                     <div>
-                        <p>{post.user.name}</p>
+                        <p><Link to={`/user/${authorId}`} onClick={() => logUserActivity(`Clicked post author profile: ${authorName}`)}>{authorName}</Link></p>
                         <p className="text-mute">a minute ago</p>
                     </div>
                 </div>
@@ -203,19 +211,29 @@ class Post extends Component {
                         :
                         <img src="https://cdn-icons-png.flaticon.com/512/1077/1077035.png" alt="not liked post" onClick={this.handlePostLikeClick} />
                     }
-                    <span>{post.likes.length}</span>
+                    <span>{likesCount}</span>
                     <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" alt="" />
-                    <span>{post.comments.length}</span>
+                    <span>{comments.length}</span>
                 </div>
                 {/* Input box to comment on the post */}
                 <div className="post-comment-box">
-                    <input type="text" onChange={this.handleCommentChange} value={this.state.commentContent} placeholder="Comment..." />
+                    <input
+                        type="text"
+                        onChange={this.handleCommentChange}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                this.handleCreateComment();
+                            }
+                        }}
+                        value={this.state.commentContent}
+                        placeholder="Comment..."
+                    />
                     <button onClick={this.handleCreateComment}>Comment</button>
                 </div>
                 {/* Area where comments will be displayed */}
                 {/* Only show if length of comments array is greater than 0 */}
-                {post.comments.length > 0 && <div className="post-comments-display">
-                    {post.comments.map((comment) => {
+                {comments.length > 0 && <div className="post-comments-display">
+                    {comments.map((comment) => {
                         return <Comment comment={comment} key={comment._id} />
                     })}
                 </div>}

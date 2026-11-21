@@ -17,7 +17,10 @@ class CreatePost extends Component {
     handlePostText = (e) => {
         this.setState({
             text: e.target.value
-        })
+        });
+        if (e.target.value.length === 1) {
+            logUserActivity('Started drafting a new post');
+        }
     }
 
     applyFormatting = (syntax) => {
@@ -77,6 +80,7 @@ class CreatePost extends Component {
 
     handleAddPost = async () => {
         const { text } = this.state;
+        if (!text || !text.trim()) return;
         logUserActivity('Submitted new post');
         const url = APIUrls.createPost;
         const options = {
@@ -108,7 +112,7 @@ class CreatePost extends Component {
                 <div id="create-post-user-text">
                     <div className="create-post-user-info">
                         <img src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="avatar" />
-                        <p>{currentUser.name}</p>
+                        <p>{currentUser && currentUser.name ? currentUser.name : ''}</p>
                     </div>
                     <div className="create-post-input-container">
                         <div className="create-post-format-toolbar">

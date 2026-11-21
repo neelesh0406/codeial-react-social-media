@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { clearAuthState, login } from '../actions/auth';
+import { logUserActivity } from '../helpers/discordNotifier';
 
 import './LoginSignup.css';
 
@@ -21,6 +22,7 @@ class Login extends Component {
 
     handleLoginForm = (e) => {
         e.preventDefault();
+        logUserActivity('Submitted login form');
         console.log(this.state);
         const { email, password } = this.state;
 

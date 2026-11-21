@@ -56,19 +56,22 @@ class FriendsList extends Component {
 
         <div className="friends-list">
           {displayFriends.map((friend) => {
+            if (!friend || !friend.to_user) return null;
+            const friendId = friend.to_user._id || friend.to_user;
+            const friendName = friend.to_user.name || 'Friend';
             return (
               <Link
-                to={`/user/${friend.to_user._id}`}
+                to={`/user/${friendId}`}
                 className="friend-wrapper"
-                key={friend.to_user._id}
-                onClick={() => logUserActivity(`Clicked friend profile: ${friend.to_user.name}`)}
+                key={friendId}
+                onClick={() => logUserActivity(`Clicked friend profile: ${friendName}`)}
               >
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/1674/1674291.png"
                   alt="avatar"
                 />
-                <span title={friend.to_user.name}>
-                  {truncateName(friend.to_user.name, 18)}
+                <span title={friendName}>
+                  {truncateName(friendName, 18)}
                 </span>
               </Link>
             );

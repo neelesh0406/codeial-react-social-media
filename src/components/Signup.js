@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import './LoginSignup.css';
 import { clearAuthState, signup } from '../actions/auth';
 import { Redirect } from 'react-router';
+import { logUserActivity } from '../helpers/discordNotifier';
 
 class Signup extends Component {
     constructor(props) {
@@ -22,6 +23,7 @@ class Signup extends Component {
 
     handleSignupForm = (e) => {
         e.preventDefault();
+        logUserActivity('Submitted registration form');
         console.log("State signup: ", this.state);
         const { email, password, confirmPassword, name } = this.state;
 
