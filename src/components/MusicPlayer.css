@@ -240,12 +240,63 @@
 /* Responsive adjustment */
 @media (max-width: 600px) {
   .music-player-container {
-    bottom: 12px;
-    right: 12px;
-    left: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    right: 8px;
+    left: 8px;
+    z-index: 9999;
   }
   .music-player-card {
     min-width: 0;
+    width: 100%;
     max-width: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  }
+  .player-main {
+    gap: 8px;
+  }
+  .equalizer-box {
+    width: 20px;
+    height: 18px;
+    gap: 2px;
+  }
+  .eq-bar {
+    width: 2.5px;
+  }
+  .track-details {
+    overflow: hidden;
+  }
+  .track-title {
+    font-size: 0.8rem;
+    max-width: 120px;
+  }
+  .track-controls-sub {
+    font-size: 0.65rem;
+    gap: 4px;
+  }
+  .switch-track-btn {
+    font-size: 0.62rem;
+    padding: 1px 4px;
+  }
+  .player-actions {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .control-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.78rem;
+  }
+  .control-btn.close-music-btn-red {
+    width: 24px;
+    height: 24px;
+    font-size: 0.82rem;
+  }
+  .music-player-reopen-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    margin-left: auto;
   }
 }

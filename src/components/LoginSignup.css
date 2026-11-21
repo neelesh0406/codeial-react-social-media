@@ -48,3 +48,34 @@
 .field button:hover {
   box-shadow: 0 0 20px #fe606d;
 }
+
+@media (max-width: 768px) {
+  .login-form {
+    width: 100%;
+    max-width: 92%;
+    margin: 20px auto;
+  }
+  .login-signup-header {
+    font-size: 1.3rem;
+    padding: 10px 8px;
+    letter-spacing: 1px;
+  }
+  .field {
+    margin: 20px 0;
+  }
+  .field label {
+    font-size: 1rem;
+    letter-spacing: 1px;
+  }
+  .field input {
+    font-size: 1rem;
+    width: 90%;
+    max-width: 280px;
+  }
+  .field button {
+    font-size: 1.1rem;
+    padding: 10px 30px;
+    width: 90%;
+    max-width: 240px;
+  }
+}

@@ -171,3 +171,73 @@
 .nav-links a:hover {
   color: white;
 }
+
+@media (max-width: 768px) {
+  .nav-container {
+    height: auto;
+    margin-bottom: 16px;
+  }
+  .nav {
+    height: auto;
+    width: 100%;
+    margin: 0 auto;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px 0;
+  }
+  .left-nav {
+    width: auto;
+    max-width: 48%;
+    display: flex;
+    align-items: center;
+  }
+  .left-nav img {
+    height: 30px;
+    max-width: 140px;
+    object-fit: contain;
+  }
+  .right-nav {
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: auto;
+  }
+  .nav-links {
+    gap: 8px;
+  }
+  .nav-links li {
+    margin: 0;
+  }
+  .nav-links a {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    padding: 4px 6px;
+  }
+  .nav-user {
+    width: auto;
+    font-size: 0.82rem;
+    margin-right: 6px;
+  }
+  .nav-user img {
+    height: 28px;
+  }
+  .search-container {
+    width: 100% !important;
+    order: 3;
+    margin-top: 4px;
+  }
+  .search-container input[type='text'] {
+    width: 100%;
+    font-size: 0.88rem;
+    padding: 7px 14px;
+  }
+  .search-container button {
+    padding: 7px 14px;
+    font-size: 0.88rem;
+  }
+  .search-results {
+    width: 100%;
+    top: calc(100% + 4px);
+  }
+}
