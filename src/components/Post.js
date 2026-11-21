@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { addLike, createComment } from '../actions/posts';
 import { APIUrls } from '../helpers/urls';
-import { getAuthTokenFromLocalStorage, getFormBody } from '../helpers/utils';
+import { getAuthTokenFromLocalStorage, getFormBody, getUserAvatar } from '../helpers/utils';
 import { logUserActivity } from '../helpers/discordNotifier';
 import { Comment } from './';
 import './Post.css';
@@ -192,11 +192,11 @@ class Post extends Component {
                 {/* header contains user avatar, name, the time when post was created */}
                 <div className="post-header">
                     <Link to={`/user/${authorId}`} onClick={() => logUserActivity(`Clicked post author profile: ${authorName}`)}>
-                        <img className="post-header-avatar" src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="avatar" />
+                        <img className="post-header-avatar" src={getUserAvatar(authorName)} alt={authorName} />
                         {/* when clicked redirect to API_ROOT/users/{post.user._id} */}
                     </Link>
                     <div>
-                        <p><Link to={`/user/${authorId}`} onClick={() => logUserActivity(`Clicked post author profile: ${authorName}`)}>{authorName}</Link></p>
+                        <p><Link to={`/user/${authorId}`} className="post-author-link" onClick={() => logUserActivity(`Clicked post author profile: ${authorName}`)}>{authorName}</Link></p>
                         <p className="text-mute">a minute ago</p>
                     </div>
                 </div>

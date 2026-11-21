@@ -43,6 +43,8 @@
 
 .friends-list {
   margin-top: 15px;
+  max-height: 440px;
+  overflow-y: auto;
 }
 .friend-wrapper {
   text-decoration: none;
@@ -67,6 +69,7 @@
   height: 38px;
   width: 38px;
   border-radius: 50%;
+  object-fit: cover;
   margin-right: 10px;
   flex-shrink: 0;
 }
@@ -86,46 +89,95 @@
     min-width: 0;
     max-width: 100%;
     position: static;
-    padding: 0;
-    order: 2;
-    margin-top: 20px;
+    padding: 12px 14px;
+    order: -1;
+    margin: 4px 0 16px 0;
+    background-color: var(--color-card-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-subtle);
   }
 
   .friends-list-container h1 {
-    font-size: 1.5rem;
-    margin-bottom: 12px;
+    font-size: 1.15rem;
+    font-style: normal;
+    font-weight: 700;
+    text-align: left;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
   }
 
   .friends-login-prompt {
-    font-size: 0.85rem;
-    padding: 8px 12px;
-    margin-bottom: 14px;
+    font-size: 0.78rem;
+    padding: 4px 0;
+    margin: 0 0 10px 0;
+    text-align: left;
+    background: transparent;
   }
 
   .friends-list {
-    margin-top: 10px;
+    margin-top: 4px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 2px 6px 2px;
+    max-height: none;
+  }
+
+  .friends-list::-webkit-scrollbar {
+    height: 4px;
+  }
+  .friends-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
   }
 
   .friend-wrapper {
-    width: 100%;
-    padding: 10px 14px;
-    font-size: 0.95rem;
+    /* Exactly 3 people visible at once on phone screen */
+    flex: 0 0 calc((100% - 20px) / 3);
+    min-width: 90px;
+    max-width: 120px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 6px 8px 6px;
     margin: 0;
-    border-radius: var(--radius-md);
-    background-color: var(--color-card-bg);
+    border-radius: 12px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    box-sizing: border-box;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+
+  .friend-wrapper:hover {
+    background-color: #f3f4f6;
+    color: black;
+    transform: translateY(-1px);
   }
 
   .friend-wrapper img {
-    height: 36px;
-    width: 36px;
-    margin-right: 12px;
+    height: 42px;
+    width: 42px;
+    margin-right: 0;
+    margin-bottom: 6px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-accent);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   }
 
   .friend-wrapper span {
-    max-width: none;
-    font-size: 0.95rem;
+    max-width: 100%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

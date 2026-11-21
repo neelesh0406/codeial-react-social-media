@@ -3,6 +3,17 @@ import { getAuthTokenFromLocalStorage } from "../helpers/utils";
 import { ADD_COMMENT, ADD_POST, UPDATE_COMMENT_LIKE, UPDATE_POSTS, UPDATE_POST_LIKE } from "./actionTypes";
 
 // Realistic fallback posts so feed displays visually when external sandbox is offline
+export const OSHO_LIVE_POST = {
+  _id: "live-post-osho-quote",
+  content: "> **The greatest fear in the world** is the *opinion of others*.",
+  user: {
+    _id: "user-osho",
+    name: "Osho"
+  },
+  likes: ["user-1"],
+  comments: []
+};
+
 export const INITIAL_FALLBACK_POSTS = [
   {
     _id: "demo-post-1",
@@ -49,8 +60,10 @@ export const INITIAL_FALLBACK_POSTS = [
 //Action creators
 export function fetchPosts() {
     return (dispatch) => {
+        const hasAnimated = typeof window !== 'undefined' && sessionStorage.getItem('codeial_osho_post_animated') === 'true';
+        const initialPosts = hasAnimated ? [OSHO_LIVE_POST, ...INITIAL_FALLBACK_POSTS] : INITIAL_FALLBACK_POSTS;
         // 1. Immediately dispatch fallback posts so feed is populated instantly
-        dispatch(updatePosts(INITIAL_FALLBACK_POSTS));
+        dispatch(updatePosts(initialPosts));
 
         // 2. Strict 3.5 second timeout to check backend API
         const controller = new AbortController();

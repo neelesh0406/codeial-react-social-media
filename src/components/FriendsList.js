@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchFriends } from '../actions/friends';
 import { logUserActivity } from '../helpers/discordNotifier';
+import { getUserAvatar } from '../helpers/utils';
 import './FriendsList.css';
 
 // Exact people featured in the mock posts & live feed
@@ -67,8 +68,8 @@ class FriendsList extends Component {
                 onClick={() => logUserActivity(`Clicked friend profile: ${friendName}`)}
               >
                 <img
-                  src="https://cdn-icons-png.flaticon.com/512/1674/1674291.png"
-                  alt="avatar"
+                  src={getUserAvatar(friendName)}
+                  alt={friendName}
                 />
                 <span title={friendName}>
                   {truncateName(friendName, 18)}

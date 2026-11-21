@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import Loader from './Loader';
 import { APIUrls } from '../helpers/urls';
 import { addFriend, removeFriend } from '../actions/friends';
-import { getAuthTokenFromLocalStorage } from '../helpers/utils';
+import { getAuthTokenFromLocalStorage, getUserAvatar } from '../helpers/utils';
 import { logUserActivity } from '../helpers/discordNotifier';
 
 class UserProfile extends Component {
@@ -131,7 +131,7 @@ class UserProfile extends Component {
                 <div className="user">
                     <div className="user-container">
                         <div className="user-field user-img">
-                            <img src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="user-avatar" />
+                            <img src={getUserAvatar(user.name)} alt="user-avatar" />
                         </div>
                         <div className="user-field">
                             <label>Name</label>

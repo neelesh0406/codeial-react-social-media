@@ -4,16 +4,20 @@ import './PostsList.css';
 import PropTypes from 'prop-types';
 import { CreatePost } from '.';
 import { Post } from './';
-import { addPost } from '../actions/posts';
+import { addPost, OSHO_LIVE_POST } from '../actions/posts';
 
 const REFERENCE_TYPING_USERS = ['Osho', 'Elon Bhadwa', 'Neelesh (Author)'];
 
 class PostsList extends Component {
   constructor(props) {
     super(props);
+    const hasAnimated =
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem('codeial_osho_post_animated') === 'true';
+
     this.state = {
-      isCheckingAPI: true,
-      isTyping: true,
+      isCheckingAPI: !hasAnimated,
+      isTyping: !hasAnimated,
       typingUser: 'Osho',
     };
     this.apiTimer = null;
@@ -41,46 +45,54 @@ class PostsList extends Component {
   componentDidMount() {
     this.detectSource();
 
-    // 3.5-second timer matching the max API check timeout
-    this.apiTimer = setTimeout(() => {
-      this.setState({
-        isCheckingAPI: false,
-        isTyping: false,
-      });
+    const hasAnimated =
+      sessionStorage.getItem('codeial_osho_post_animated') === 'true';
 
-      // Inject the newly typed post into the feed
-      const newLivePost = {
-        _id: 'live-post-' + Date.now(),
-        content:
-          '> **The greatest fear in the world** is the *opinion of others*.\n\nAnd the moment you are fearless you are no longer a sheep, you become a **lion** 🦁. A great roar arises in your heart, the *roar of freedom*! ✨',
-        user: {
-          _id: 'user-osho',
-          name: 'Osho',
-        },
-        likes: [],
-        comments: [],
-      };
+    if (!hasAnimated) {
+      // 3.5-second timer matching the max API check timeout
+      this.apiTimer = setTimeout(() => {
+        try {
+          sessionStorage.setItem('codeial_osho_post_animated', 'true');
+        } catch (e) {}
 
-      if (this.props.dispatch) {
-        this.props.dispatch(addPost(newLivePost));
+        this.setState({
+          isCheckingAPI: false,
+          isTyping: false,
+        });
+
+        // Inject the newly typed post into the feed if not already present
+        const postExists =
+          this.props.posts &&
+          this.props.posts.some((p) => p._id === OSHO_LIVE_POST._id);
+        if (!postExists && this.props.dispatch) {
+          this.props.dispatch(addPost(OSHO_LIVE_POST));
+        }
+
+        // Play crisp, audible notification pop (handled gracefully if browser blocks autoplay)
+        try {
+          const chime = new Audio(
+            'https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3'
+          );
+          chime.volume = 0.5;
+          chime.play().catch(() => {});
+        } catch (err) {
+          // Audio error ignored
+        }
+
+        // Trigger music playback simultaneously with mock post arrival
+        try {
+          window.dispatchEvent(new CustomEvent('codeial:play-music'));
+        } catch (e) {}
+      }, 3500);
+    } else {
+      // Already animated once in this session: ensure Osho post is present immediately without delay
+      const postExists =
+        this.props.posts &&
+        this.props.posts.some((p) => p._id === OSHO_LIVE_POST._id);
+      if (!postExists && this.props.dispatch) {
+        this.props.dispatch(addPost(OSHO_LIVE_POST));
       }
-
-      // Play crisp, audible notification pop (handled gracefully if browser blocks autoplay)
-      try {
-        const chime = new Audio(
-          'https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3'
-        );
-        chime.volume = 0.5;
-        chime.play().catch(() => {});
-      } catch (err) {
-        // Audio error ignored
-      }
-
-      // Trigger music playback simultaneously with mock post arrival
-      try {
-        window.dispatchEvent(new CustomEvent('codeial:play-music'));
-      } catch (e) {}
-    }, 3500);
+    }
 
     // Random user typing badge every ~6 seconds for a few seconds
     this.typingInterval = setInterval(() => {
